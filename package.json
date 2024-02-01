@@ -1,0 +1,20 @@
+{
+  "name": "fetch-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "fetch-server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon fetch-server.js"
+  },
+  "author": "Sreenando Das Himal",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "db": "^5.1.3",
+    "express": "^4.18.2",
+    "mongodb": "^6.3.0",
+    "morgan": "^1.10.0",
+    "properties-reader": "^2.3.0"
+  }
+}
