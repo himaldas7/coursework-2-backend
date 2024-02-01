@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <title>Vue.js lessons website</title>
+    <script src="https://unpkg.com/vue@2.7.8/dist/vue.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <!--script src="lessons.js"></-script-->  
+<!--i did some changes here ..........-->
+</head>
+
+<body>
+
+    <div id="app">
+        <header>
+            <h1 v-text="sitename"></h1>
+            <button v-on:click="showCheckout">
+                {{itemsInTheCart}}
+                <span class="fa-solid fa-cart-shopping"></span>
+                Checkout
+            </button>
+        </header>
+
+        
+
+        
+
+            <div v-if="showlessons">
+                <main>
+                    <div style='border:1px solid #000000' v-for="lessons in sortedlessons">
+
+                        <h1 v-text="lessons.Subject"></h1>
+                        <figure>
+                            <img style='border:1px solid #000000' v-bind:src="lessons.image" alt="lessons" width="180" height="200">
+                        </figure>
+            
+                        <!-- lessons information -->
+                        
+                        <p v-html="lessons.Location"></p>
+                        <p><strong>price: {{lessons.price}}</strong></p>
+            
+                        <!-- 'add to cart' button -->
+                        <button v-if="canAddToTheCart(lessons)" 
+                        v-on:click="addItemToTheCart(lessons)">Add to the Cart</button>
+            
+                        <!-- inventory message -->
+                        <button v-else disabled>Add to the Cart</button>
+
+                        <span v-if="itemsLeft(lessons) === 0"> All out!</span>
+                        <span v-else-if="itemsLeft(lessons) < 5">Only {{itemsLeft(lessons)}} left!</span>
+                        <span v-else> Buy Now!</span>
+            
+                        <!-- rating -->
+                        <div>
+                            <span v-for='n in lessons.rating'>★</span>
+                            <span v-for='n in 5 - lessons.rating'>☆</span>
+                        </div> 
+                    </div>
+                </main>
+            </div>
+            <div v-else>
+                <h1>Welcome to the checkout page</h1>
+                <p>
+                    <strong>Name: </strong>
+                    <input type="text" v-model.trim="order.name">
+                </p>
+                <p>
+                    <strong>Surname: </strong>
+                    <input type="text" v-model.trim="order.surname">
+                </p>
+                <p>
+                    <strong>Address: </strong>
+                    <input type="text" v-model="order.address">
+                </p>
+                <p>
+                    <strong>State: </strong>
+                    <select v-model="order.state">
+                        <option disabled></option>
+                        <option v-for="(state, key) in states" v-bind:value="state">{{key}}</option>
+                        <!--  <option v-bind:value="states.AL">AL</option>
+                                    <option v-bind:value="states.AR">AR</option>
+                                    <option v-bind:value="states.CA">CA</option>
+                                    <option v-bind:value="states.NR">VR</option> -->
+                    </select>
+            
+                </p>
+                <p>
+                    <strong>Zip/Postal Code: </strong>
+                    <input type="number" v-model.number="order.Zip">
+                </p>
+                <p>
+                    <input type="checkbox" id="gift" v-model="order.gift" v-bind:true-value="order.sendGift" v-bind:false-value="order.donotSendGift">
+                    <label for="gift">Send as a gift?</label>
+                </p>
+                <p>
+                    <input type="radio" id="home" value="Home" v-model="order.method">
+                    <lable for="home">Home</lable>
+                    <input type="radio" id="business" value="Business" v-model="order.method">
+                    <lable for="business">Business</lable>
+                </p>
+            
+                <h2>Order Information</h2>
+                <p>
+                    <strong>Name: </strong>{{order.name}}
+                </p>
+                <p>
+                    <strong>Surname: </strong>{{ order.surname }}
+                </p>
+                <p>
+                    <strong>Address: </strong>{{order.address}}
+                </p>
+                <p>
+                    <strong>State: </strong>{{order.state}}
+                </p>
+                <p>
+                    <strong>Zip/Postal Code: </strong>{{order.Zip}}
+                </p>
+                <p>
+                    <strong>Gift? </strong>{{order.gift}}
+                </p>
+                <p>
+                    <strong>Deliver to address: </strong>{{order.method}}
+                </p>
+                
+            
+                <button v-on:click="submitCheckoutForm">Place Order</button>
+            </div>
+        
+    </div>
+
+
+    <script>
+
+        let webstore = new Vue({
+            el: "#app", //<Don't forget this comma 
+            data: { 
+                
+                //the 'data' option
+                //the key 'sitename' matches the value of 'v-text' earlier
+                
+                sitename: 'Vue.js Lessons website',
+                showlessons: true,
+
+                // The first 'lessons' is a Vue property
+                // The second lessons is the array from the 'lessons.js’
+                
+                
+                lessons: [], //lessons,  //i did some changes here ..........
+
+
+              /*   lessons: {
+                    id: 1001,
+                    Subject: "Cat Food, 25lb bag",
+                    Location: "A 25 pound bag of irresistible ," + "organic goodness for your cat.",
+                    price: 2000,
+                    image: "images/catfood2.png",
+                    Spaces: 10,
+                    rating: 3
+                }, */
+
+
+
+                cart: [],
+                order: {
+                    name: "",
+                    surname: "",
+                    address: "",
+                    state: "",
+                    Zip: "",
+                    gift: "Send as a gift",
+                    method: 'Home',
+                    sendGift: "Send as a gift",
+                    donotSendGift: "Do not send as a gift"
+                },
+                states: {
+                    AL: "Alabama",
+                    AR: "Arizona",
+                    CA: " California",
+                    NV: "Nevada"
+                }
+            },
+
+            created: function() {
+                // fetch("http://localhost:3000/collections/lessons").then(
+                //     function(response) {
+                //         response.text().then(
+                //             function(text) {
+                //                 alert(text);
+                //             }
+                //         )
+                //     }
+                // )
+
+                // fetch("http://localhost:3000/collections/lessons").then(
+                //     function(response) {
+                //         response.text().then(
+                //             function(json) {
+                //                 //alert(json);
+                //                 //console.log(json);
+                //                webstore.lessons = json; //problem with this line 
+                //             }
+                //         )
+                //     }
+                // );
+
+                fetch("http://localhost:3000/collections/lessons").then(
+    function(response) {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        response.text().then(
+            function(json) {
+                webstore.lessons = JSON.parse(json);
+            }
+        )
+    }
+).catch(function(error) {
+    console.error('Fetch error:', error);
+});
+
+                },
+
+            methods: {
+                showCheckout: function () {
+                    /*   if (this.showlessons) {
+                          this.showlessons = false
+                      } else {
+                          this.showlessons = true
+                      } */
+                    this.showlessons = this.showlessons ? false : true;
+                },
+
+                addItemToTheCart: function (lessons) {
+                    this.cart.push(lessons.id);
+                },
+                submitCheckoutForm() {
+                    alert("Congratulations, Order Submitted :) ")
+                },
+                canAddToTheCart (lessons) {
+                    return lessons.Spaces > this.cartCount(lessons.id);
+                },
+                cartCount(id) {
+                    let count = 0;
+                    for (let i = 0; i < this.cart.length; i++) {
+                        if(this.cart[i] === id) {
+                            count++;
+                        }
+                        
+                    }
+                    return count;
+
+            },
+            itemsLeft(lessons) {
+                    return lessons.Spaces - this.cartCount(lessons.id);
+                }
+            },
+
+
+            computed: {
+                itemsInTheCart: function () {
+                    return this.cart.length || "";
+                },
+                sortedlessons() {
+                    // the comparison function that defines the order
+                    function compare(a, b) {
+                        if (a.price > b.price) return 1;
+                        if (a.price < b.price) return -1;
+                        return 0;
+                    }
+                    // sort the 'lessons' array and return it
+                    return this.lessons.sort(compare);
+                }
+
+            }
+
+        });
+
+    </script>
+
+</body>
+
+</html>
